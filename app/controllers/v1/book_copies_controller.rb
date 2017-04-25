@@ -61,7 +61,7 @@ module V1
     end
 
     def book_copy_params
-      params.require(:book_copy).permit(:first_name, :last_name)
+      params.require(:book_copy).permit(:book_id, :format, :isbn, :published, :user_id)
     end
   end
 end

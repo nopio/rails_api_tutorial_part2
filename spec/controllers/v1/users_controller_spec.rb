@@ -1,9 +1,8 @@
 require 'rails_helper'
 
-describe V1::AuthorsController do
+describe V1::UsersController do
   let(:admin) { create(:admin) }
   let(:user) { create(:user) }
-  let(:author) { create(:author) }
 
   before { request.env['HTTP_AUTHORIZATION'] = "Token token=#{api_key}" }
 
@@ -13,12 +12,12 @@ describe V1::AuthorsController do
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
-      before { author }
+      before { user }
 
       it { is_expected.to be_successful }
       it 'returns valid JSON' do
         body = JSON.parse(subject.body)
-        expect(body['authors'].length).to eq(1)
+        expect(body['users'].length).to eq(2)
         expect(body['meta']['pagination']).to be_present
       end
     end
@@ -31,7 +30,7 @@ describe V1::AuthorsController do
   end
 
   describe '#show' do
-    subject { get :show, params: { id: author.id } }
+    subject { get :show, params: { id: user.id } }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
@@ -40,7 +39,7 @@ describe V1::AuthorsController do
 
       it 'returns valid JSON' do
         subject
-        expect(response.body).to eq({ author: AuthorSerializer.new(author).attributes }.to_json)
+        expect(response.body).to eq({ user: UserSerializer.new(user).attributes }.to_json)
       end
     end
 
@@ -52,20 +51,20 @@ describe V1::AuthorsController do
   end
 
   describe '#create' do
-    let(:author_params) { { first_name: 'First name' } }
+    let(:user_params) { { first_name: nil } }
 
-    subject { post :create, params: { author: author_params } }
+    subject { post :create, params: { user: user_params } }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
       context 'with valid params' do
-        let(:author_params) { { first_name: 'First name', last_name: 'Last name' } }
+        let(:user_params) { { first_name: 'Name', last_name: 'Last', email: 'foo@bar.com' } }
 
         it { is_expected.to be_created }
 
-        it 'creates an author' do
-          expect { subject }.to change(Author, :count).by(1)
+        it 'creates a user' do
+          expect { subject }.to change(User, :count).by(1)
         end
       end
 
@@ -82,27 +81,27 @@ describe V1::AuthorsController do
   end
 
   describe '#update' do
-    let(:author_params) { {} }
+    let(:user_params) { {} }
 
-    subject { put :update, params: { id: author.id, author: author_params } }
+    subject { put :update, params: { id: user.id, user: user_params } }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
       context 'with valid params' do
-        let(:author_params) { { first_name: 'Foo' } }
+        let(:user_params) { { last_name: 'Last' } }
 
         it 'updates requested record' do
           subject
-          expect(author.reload.first_name).to eq(author_params[:first_name])
-          expect(response.body).to eq({ author: AuthorSerializer.new(author.reload).attributes }.to_json)
+          expect(user.reload.last_name).to eq(user_params[:last_name])
+          expect(response.body).to eq({ user: UserSerializer.new(user.reload).attributes }.to_json)
         end
 
         it { is_expected.to be_successful }
       end
 
       context 'with invalid params' do
-        let(:author_params) { { first_name: nil } }
+        let(:user_params) { { first_name: nil } }
 
         it { is_expected.to have_http_status(:unprocessable_entity) }
       end
@@ -116,15 +115,15 @@ describe V1::AuthorsController do
   end
 
   describe '#destroy' do
-    subject { delete :destroy, params: { id: author.id } }
+    subject { delete :destroy, params: { id: user.id } }
 
-    before { author }
+    before { user }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
       it 'removes requested record' do
-        expect { subject }.to change(Author, :count).by(-1)
+        expect { subject }.to change(User, :count).by(-1)
       end
 
       it { is_expected.to be_no_content }

@@ -1,9 +1,10 @@
 require 'rails_helper'
 
-describe V1::AuthorsController do
+describe V1::BookCopiesController do
   let(:admin) { create(:admin) }
   let(:user) { create(:user) }
-  let(:author) { create(:author) }
+  let(:book_copy) { create(:book_copy) }
+  let(:book) { create(:book) }
 
   before { request.env['HTTP_AUTHORIZATION'] = "Token token=#{api_key}" }
 
@@ -13,12 +14,12 @@ describe V1::AuthorsController do
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
-      before { author }
+      before { book_copy }
 
       it { is_expected.to be_successful }
       it 'returns valid JSON' do
         body = JSON.parse(subject.body)
-        expect(body['authors'].length).to eq(1)
+        expect(body['book_copies'].length).to eq(1)
         expect(body['meta']['pagination']).to be_present
       end
     end
@@ -31,7 +32,7 @@ describe V1::AuthorsController do
   end
 
   describe '#show' do
-    subject { get :show, params: { id: author.id } }
+    subject { get :show, params: { id: book_copy.id } }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
@@ -40,7 +41,7 @@ describe V1::AuthorsController do
 
       it 'returns valid JSON' do
         subject
-        expect(response.body).to eq({ author: AuthorSerializer.new(author).attributes }.to_json)
+        expect(response.body).to eq({ book_copy: BookCopySerializer.new(book_copy).attributes }.to_json)
       end
     end
 
@@ -52,20 +53,20 @@ describe V1::AuthorsController do
   end
 
   describe '#create' do
-    let(:author_params) { { first_name: 'First name' } }
+    let(:book_copy_params) { { isbn: '00001' } }
 
-    subject { post :create, params: { author: author_params } }
+    subject { post :create, params: { book_copy: book_copy_params } }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
       context 'with valid params' do
-        let(:author_params) { { first_name: 'First name', last_name: 'Last name' } }
+        let(:book_copy_params) { { isbn: '00001', published: Date.today, book_id: book.id, format: 'hardback' } }
 
         it { is_expected.to be_created }
 
-        it 'creates an author' do
-          expect { subject }.to change(Author, :count).by(1)
+        it 'creates an book_copy' do
+          expect { subject }.to change(BookCopy, :count).by(1)
         end
       end
 
@@ -82,27 +83,27 @@ describe V1::AuthorsController do
   end
 
   describe '#update' do
-    let(:author_params) { {} }
+    let(:book_copy_params) { {} }
 
-    subject { put :update, params: { id: author.id, author: author_params } }
+    subject { put :update, params: { id: book_copy.id, book_copy: book_copy_params } }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
       context 'with valid params' do
-        let(:author_params) { { first_name: 'Foo' } }
+        let(:book_copy_params) { { isbn: '0000033' } }
 
         it 'updates requested record' do
           subject
-          expect(author.reload.first_name).to eq(author_params[:first_name])
-          expect(response.body).to eq({ author: AuthorSerializer.new(author.reload).attributes }.to_json)
+          expect(book_copy.reload.isbn).to eq(book_copy_params[:isbn])
+          expect(response.body).to eq({ book_copy: BookCopySerializer.new(book_copy.reload).attributes }.to_json)
         end
 
         it { is_expected.to be_successful }
       end
 
       context 'with invalid params' do
-        let(:author_params) { { first_name: nil } }
+        let(:book_copy_params) { { isbn: nil } }
 
         it { is_expected.to have_http_status(:unprocessable_entity) }
       end
@@ -116,15 +117,15 @@ describe V1::AuthorsController do
   end
 
   describe '#destroy' do
-    subject { delete :destroy, params: { id: author.id } }
+    subject { delete :destroy, params: { id: book_copy.id } }
 
-    before { author }
+    before { book_copy }
 
     context 'as admin' do
       let(:api_key) { admin.api_key }
 
       it 'removes requested record' do
-        expect { subject }.to change(Author, :count).by(-1)
+        expect { subject }.to change(BookCopy, :count).by(-1)
       end
 
       it { is_expected.to be_no_content }

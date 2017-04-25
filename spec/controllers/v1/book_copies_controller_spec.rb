@@ -137,4 +137,90 @@ describe V1::BookCopiesController do
       it { is_expected.to be_unauthorized }
     end
   end
+
+  describe '#borrow' do
+    subject { put :borrow, params: book_copy_params }
+
+    context 'as admin' do
+      let(:api_key) { admin.api_key }
+
+      context 'without user_id param' do
+        let(:book_copy_params) { { id: book_copy.id } }
+
+        it { is_expected.to have_http_status(:unprocessable_entity) }
+      end
+
+      context 'with user_id param' do
+        let(:book_copy_params) { { id: book_copy.id, user_id: user.id } }
+
+        context 'book is not borrowed' do
+          it { is_expected.to be_successful }
+        end
+
+        context 'book is borrowed' do
+          before { book_copy.update_column(:user_id, user.id) }
+
+          it { is_expected.to have_http_status(:unprocessable_entity) }
+        end
+      end
+    end
+
+    context 'as user' do
+      let(:api_key) { user.api_key }
+      let(:book_copy_params) { { id: book_copy.id } }
+
+      context 'book is not borrowed' do
+        it { is_expected.to be_successful }
+      end
+
+      context 'book is borrowed' do
+        before { book_copy.update_column(:user_id, admin.id) }
+
+        it { is_expected.to have_http_status(:unprocessable_entity) }
+      end
+    end
+  end
+
+  describe '#return_book' do
+    subject { put :return_book, params: book_copy_params }
+
+    context 'as admin' do
+      let(:api_key) { admin.api_key }
+
+      context 'without user_id param' do
+        let(:book_copy_params) { { id: book_copy.id } }
+
+        it { is_expected.to have_http_status(:unprocessable_entity) }
+      end
+
+      context 'with user_id param' do
+        let(:book_copy_params) { { id: book_copy.id, user_id: user.id } }
+
+        context 'book is not borrowed' do
+          it { is_expected.to have_http_status(:unprocessable_entity) }
+        end
+
+        context 'book is borrowed' do
+          before { book_copy.update_column(:user_id, user.id) }
+
+          it { is_expected.to be_successful }
+        end
+      end
+    end
+
+    context 'as user' do
+      let(:api_key) { user.api_key }
+      let(:book_copy_params) { { id: book_copy.id } }
+
+      context 'book is borrowed' do
+        before { book_copy.update_column(:user_id, user.id) }
+
+        it { is_expected.to be_successful }
+      end
+
+      context 'book is not borrowed' do
+        it { is_expected.to be_forbidden }
+      end
+    end
+  end
 end

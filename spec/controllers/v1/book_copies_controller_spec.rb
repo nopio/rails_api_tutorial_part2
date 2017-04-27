@@ -201,9 +201,19 @@ describe V1::BookCopiesController do
         end
 
         context 'book is borrowed' do
-          before { book_copy.update_column(:user_id, user.id) }
+          context 'user_id matches to a book_copy user_id' do
+            before { book_copy.update_column(:user_id, user.id) }
 
-          it { is_expected.to be_successful }
+            it { is_expected.to be_successful }
+          end
+
+          context 'user_id does not match to a book_copy user_id' do
+            let(:another_user) { create(:user) }
+
+            before { book_copy.update_column(:user_id, another_user.id) }
+
+            it { is_expected.to be_successful }
+          end
         end
       end
     end
@@ -213,9 +223,19 @@ describe V1::BookCopiesController do
       let(:book_copy_params) { { id: book_copy.id } }
 
       context 'book is borrowed' do
-        before { book_copy.update_column(:user_id, user.id) }
+        context 'current user is a user who borrowed a book' do
+          before { book_copy.update_column(:user_id, user.id) }
 
-        it { is_expected.to be_successful }
+          it { is_expected.to be_successful }
+        end
+
+        context 'current user is not a user who borrowed a book' do
+          let(:another_user) { create(:user) }
+
+          before { book_copy.update_column(:user_id, another_user.id) }
+
+          it { is_expected.to be_forbidden }
+        end
       end
 
       context 'book is not borrowed' do
